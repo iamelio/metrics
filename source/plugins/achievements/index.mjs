@@ -14,7 +14,7 @@ export default async function({login, q, imports, data, computed, graphql, queri
 
     //Initialization
     const list = []
-    await total({imports, graphql, queries})
+    await total()
     await compute[account]({list, login, data, computed, imports, graphql, queries, rest, rank, leaderboard})
 
     //Results
@@ -71,56 +71,16 @@ function leaderboard({user, type, requirement}) {
     : null
 }
 
-/**Total extracter */
-async function total({imports, graphql, queries}) {
-  if (!total.promise) {
-    total.promise = new Promise(async (solve, reject) => {
-      for (const method of ["graphql", "browser"]) {
-        console.debug(`metrics/compute/plugins > achievements > setup using ${method}`)
-        try {
-          //Setup using GraphQL
-          if (method === "graphql") {
-            const queried = await graphql(queries.achievements.total())
-            Object.assign(total, Object.fromEntries(Object.entries(queried).map(([key, {count: value}]) => [key, value])))
-          }
-          //Setup using browser
-          if (method === "browser") {
-            //Setup browser
-            console.debug("metrics/compute/plugins > achievements > filling total from github.com/search")
-            const browser = await imports.puppeteer.launch()
-            console.debug(`metrics/compute/plugins > achievements > started ${await browser.version()}`)
-            //Extracting total from github.com/search
-            for (let i = 0; (i < 4) && ((!total.users) || (!total.repositories)); i++) {
-              const page = await browser.newPage()
-              await page.goto("https://github.com/search?q=created%3A%3E%3D1970")
-              const results = await page.evaluate(() => [...[...document.querySelectorAll("h2")].filter(node => /Filter by/.test(node.innerText)).shift()?.nextSibling?.innerText.trim().matchAll(/(?<type>Repositories|Users|Issues)\n.*?(?<count>\d+)M/g) ?? []]) ?? null
-              for (const result of results) {
-                const type = result[1]?.toLowerCase()
-                console.debug(`metrics/compute/plugins > achievements > setup found ${type ?? "(?)"}`)
-                const count = result[2] ?? ""
-                if ((count !== "") && (!total[type])) {
-                  total[type] = Number(count) * 10e5
-                  console.debug(`metrics/compute/plugins > achievements > set total.${type} to ${total[type]}`)
-                }
-              }
-              await page.close()
-              await imports.wait(10 * Math.random())
-            }
-          }
-          //Check setup state
-          if ((!total.users) || (!total.repositories))
-            throw new Error("Uncomplete setup")
-        }
-        catch (error) {
-          console.debug(`metrics/compute/plugins > achievements > setup error > ${error}`)
-          continue
-        }
-      }
-      if ((!total.users) || (!total.repositories))
-        return reject("Failed to initiate total for achievement plugin")
-      console.debug("metrics/compute/plugins > achievements > total setup complete")
-      return solve()
-    })
+/**Total extracter
+ * GitHub deprecated the search API for global totals and the browser scrape no longer works.
+ * These values are used only as approximate denominators for leaderboard percentile rankings,
+ * so hardcoded estimates are a safe and stable replacement.
+ */
+async function total() {
+  if (!total.users) {
+    total.users = 150_000_000     // ~150M GitHub users (2025 estimate)
+    total.repositories = 500_000_000 // ~500M public repositories (2025 estimate)
+    total.issues = 300_000_000    // ~300M issues
+    console.debug("metrics/compute/plugins > achievements > using hardcoded totals (GitHub API no longer provides global counts)")
   }
-  return total.promise
 }
