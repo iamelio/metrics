@@ -263,25 +263,26 @@ export default async function({faker}, target, that, [{username: login, page, pe
           login,
         },
         repo: {
-          name: `${faker.lorem.word()}/${faker.lorem.word()}`,
+          name: "lowlighter/metrics",
         },
         payload: {
           size: 1,
           ref: "refs/heads/master",
+          before: "MOCKED_BEFORE_SHA",
+          head: "MOCKED_SHA",
+          // Note: GitHub removed commit details (author, message, etc.) from PushEvent payloads in Aug 2025.
+          // Only before/head SHAs are now provided; commit data must be fetched separately via REST API.
           commits: [
             {
               sha: "MOCKED_SHA",
-              message: faker.lorem.sentence(),
               url: "https://api.github.com/repos/lowlighter/metrics/commits/MOCKED_SHA",
-              author: {
-                email: faker.internet.email(),
-              },
             },
           ],
         },
         created_at: faker.date.recent({days: 7}),
         public: true,
       },
+
       {
         id: "10000000012",
         type: "PullRequestEvent",
