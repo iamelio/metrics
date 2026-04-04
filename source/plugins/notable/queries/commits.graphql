@@ -11,7 +11,7 @@ fragment RepoFragment on Repository {
     target {
       ... on Commit {
         id
-        history(first: 0) {
+        history(first: 1) {
           totalCount
         }
       }

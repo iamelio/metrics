@@ -1,14 +1,14 @@
 query AchievementsRanking {
-  repo_rank:search(query: "stars:>$stars", type: REPOSITORY, first: 0) {
+  repo_rank:search(query: "stars:>$stars", type: REPOSITORY, first: 1) {
     repositoryCount
   }
-  user_rank:search(query: "followers:>$followers", type: USER, first: 0) {
+  user_rank:search(query: "followers:>$followers", type: USER, first: 1) {
     userCount
   }
-  forks_rank:search(query: "forks:>$forks", type: REPOSITORY, first: 0) {
+  forks_rank:search(query: "forks:>$forks", type: REPOSITORY, first: 1) {
     repositoryCount
   }
-  created_rank:search(query: "repos:>$created", type: USER, first: 0) {
+  created_rank:search(query: "repos:>$created", type: USER, first: 1) {
     userCount
   }
 }
