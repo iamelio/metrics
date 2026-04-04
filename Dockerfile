@@ -2,12 +2,10 @@
 FROM node:20-bookworm-slim
 
 # Environment variables
-# We set these at the top so npm ci/install respects them immediately
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_BROWSER_PATH=google-chrome-stable
 
-# Copy repository
-COPY . /metrics
+# Set working directory
 WORKDIR /metrics
 
 # Setup basic dependencies
@@ -28,16 +26,23 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --d
 RUN curl -fsSL https://deno.land/x/install/install.sh | DENO_INSTALL=/usr/local sh
 
 # Install Ruby and Licensed gem (for Licenses plugin)
+# We use --no-document to save time and space
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
      ruby-full make g++ cmake pkg-config libssl-dev \
-  && gem install licensed \
+  && gem install licensed --no-document \
   && rm -rf /var/lib/apt/lists/*
 
-# Install node modules and build
+# Install node modules
+# We copy package files first to leverage Docker layer caching
+COPY package.json package-lock.json ./
+RUN CI=true npm ci --no-audit --no-fund
+
+# Copy repository
+COPY . .
+
+# Build and set permissions
 RUN chmod +x /metrics/source/app/action/index.mjs \
-  && npm config set progress false \
-  && CI=true npm install --no-audit --no-fund \
   && npm run build
 
 # Execute GitHub action
