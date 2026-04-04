@@ -2,6 +2,7 @@
 FROM node:20-bookworm-slim
 
 # Environment variables
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_BROWSER_PATH=google-chrome-stable
 
