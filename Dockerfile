@@ -30,7 +30,7 @@ RUN curl -fsSL https://deno.land/x/install/install.sh | DENO_INSTALL=/usr/local 
 # Install Ruby and Licensed gem (for Licenses plugin)
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
-     ruby-full g++ cmake pkg-config libssl-dev \
+     ruby-full make g++ cmake pkg-config libssl-dev \
   && gem install licensed \
   && rm -rf /var/lib/apt/lists/*
 
