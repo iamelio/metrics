@@ -93,13 +93,13 @@ jobs:
     needs: [ update-indexes ]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Login to GitHub registry
         run: echo ${{ github.token }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Build docker image
-        run: docker build -t ghcr.io/lowlighter/metrics:master .
+        run: docker build -t ghcr.io/iamelio/metrics:master .
       - name: Publish to GitHub registry
-        run: docker push ghcr.io/lowlighter/metrics:master
+        run: docker push ghcr.io/iamelio/metrics:master
       - name: Tag docker image (beta) and publish to GitHub registry
         run: |
           set +e
@@ -108,13 +108,13 @@ jobs:
           set -e
           if [[ ! -z "$METRICS_VERSION" ]]; then
             echo "Beta version: v$METRICS_VERSION_BETA"
-            docker tag ghcr.io/lowlighter/metrics:master ghcr.io/lowlighter/metrics:$(echo "v$METRICS_VERSION_BETA")
-            docker push ghcr.io/lowlighter/metrics:$(echo "v$METRICS_VERSION_BETA")
+            docker tag ghcr.io/iamelio/metrics:master ghcr.io/iamelio/metrics:$(echo "v$METRICS_VERSION_BETA")
+            docker push ghcr.io/iamelio/metrics:$(echo "v$METRICS_VERSION_BETA")
           fi
       - name: Tag docker image (main) and publish to GitHub registry
         run: |
-          docker tag ghcr.io/lowlighter/metrics:master ghcr.io/lowlighter/metrics:main
-          docker push ghcr.io/lowlighter/metrics:main
+          docker tag ghcr.io/iamelio/metrics:master ghcr.io/iamelio/metrics:main
+          docker push ghcr.io/iamelio/metrics:main
 
   # Deploy to beta-metrics.lecoq.io
   deploy-master:
@@ -178,23 +178,23 @@ jobs:
     if: contains(github.event.head_commit.message, '[release]')
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Login to GitHub registry
         run: echo ${{ github.token }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Pull docker image (master)
-        run: docker pull ghcr.io/lowlighter/metrics:master
+        run: docker pull ghcr.io/iamelio/metrics:master
       - name: Tag docker image (release)
         env:
           GITHUB_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        run: docker tag ghcr.io/lowlighter/metrics:master ghcr.io/lowlighter/metrics:$(echo $GITHUB_COMMIT_MESSAGE | grep -Po 'v\d+[.]\d+')
+        run: docker tag ghcr.io/iamelio/metrics:master ghcr.io/iamelio/metrics:$(echo $GITHUB_COMMIT_MESSAGE | grep -Po 'v\d+[.]\d+')
       - name: Publish release to GitHub registry
         env:
           GITHUB_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        run: docker push ghcr.io/lowlighter/metrics:$(echo $GITHUB_COMMIT_MESSAGE | grep -Po 'v\d+[.]\d+')
+        run: docker push ghcr.io/iamelio/metrics:$(echo $GITHUB_COMMIT_MESSAGE | grep -Po 'v\d+[.]\d+')
       - name: Tag docker image (latest)
-        run: docker tag ghcr.io/lowlighter/metrics:master ghcr.io/lowlighter/metrics:latest
+        run: docker tag ghcr.io/iamelio/metrics:master ghcr.io/iamelio/metrics:latest
       - name: Publish latest to GitHub registry
-        run: docker push ghcr.io/lowlighter/metrics:latest
+        run: docker push ghcr.io/iamelio/metrics:latest
 
   # Rebase latest branch on master
   update-latest:
