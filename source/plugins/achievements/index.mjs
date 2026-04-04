@@ -14,7 +14,7 @@ export default async function({login, q, imports, data, computed, graphql, queri
 
     //Initialization
     const list = []
-    await total()
+    await total(rest)
     await compute[account]({list, login, data, computed, imports, graphql, queries, rest, rank, leaderboard})
 
     //Results
@@ -72,15 +72,30 @@ function leaderboard({user, type, requirement}) {
 }
 
 /**Total extracter
- * GitHub deprecated the search API for global totals and the browser scrape no longer works.
- * These values are used only as approximate denominators for leaderboard percentile rankings,
- * so hardcoded estimates are a safe and stable replacement.
+ * Fetches real-time global GitHub counts via the REST Search API.
+ * These are used as denominators for leaderboard percentile rankings.
+ * Falls back to conservative estimates if the API is unavailable.
  */
-async function total() {
-  if (!total.users) {
-    total.users = 150_000_000     // ~150M GitHub users (2025 estimate)
-    total.repositories = 500_000_000 // ~500M public repositories (2025 estimate)
-    total.issues = 300_000_000    // ~300M issues
-    console.debug("metrics/compute/plugins > achievements > using hardcoded totals (GitHub API no longer provides global counts)")
+async function total(rest) {
+  if (!total.promise) {
+    total.promise = (async () => {
+      try {
+        const [{data: {total_count: users}}, {data: {total_count: repositories}}] = await Promise.all([
+          rest.search.users({q: "type:user", per_page: 1}),
+          rest.search.repositories({q: "is:public", per_page: 1}),
+        ])
+        total.users = users
+        total.repositories = repositories
+        total.issues = repositories // rough approximation; not used in leaderboards
+        console.debug(`metrics/compute/plugins > achievements > fetched live totals: ${users.toLocaleString()} users, ${repositories.toLocaleString()} repositories`)
+      }
+      catch (error) {
+        console.debug(`metrics/compute/plugins > achievements > failed to fetch live totals (${error}), using fallback estimates`)
+        total.users = total.users ?? 150_000_000
+        total.repositories = total.repositories ?? 500_000_000
+        total.issues = total.issues ?? 300_000_000
+      }
+    })()
   }
+  return total.promise
 }
